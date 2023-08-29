@@ -130,7 +130,6 @@ def write_training_info_to_json(model, optimizer, config, loss_function, weights
         "pretrained": True,  # or False, depending on your case
         "optimizer": type(optimizer).__name__,
         "learning_rate": config.learning_rate,
-        "dropout": model.dropout,  # assuming your model has a 'dropout' attribute
         "loss_function": type(loss_function).__name__,
         "class_weights": weights,
         # add any other parameters you want to track
