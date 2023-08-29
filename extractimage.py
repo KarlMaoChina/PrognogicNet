@@ -1,6 +1,6 @@
 from fileutility import extract_largest_masks, extract_largest_mask_and_neighbors_with_crop
 def main():
-    image_dir = "/data/maoshufan/jiadata/T2WI-1/images_full"
+    image_dir = "/data/maoshufan/jiadata/T2WI-1/images_adc/"
     mask_dir = "/data/maoshufan/jiadata/T2WI-1/masks_full"
     output_dir = "/data/maoshufan/jiadata/T2WI-1/images_cropxy_full"
 
