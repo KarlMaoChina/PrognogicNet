@@ -84,7 +84,7 @@ def main():
         RandRotate90(),
         RandAffine(),
         RandFlip(),
-        RandZoom(min_zoom=0.7, max_zoom=1.3, prob=0.5),
+        RandZoom(min_zoom=0.7, max_zoom=1.2, prob=0.5),
         RandGaussianNoise(),
         NormalizeIntensity(),
     ])
