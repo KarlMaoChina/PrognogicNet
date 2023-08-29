@@ -40,4 +40,17 @@ The training information, including the epoch, loss, AUC, and accuracy for both 
 ## Usage
 
 To run the script, use the following command:
+python train_2d_xy_seg_aug_simp.py
 
+
+## Configuration
+
+The script uses a `TrainConfig` class to manage all the training configurations. This includes the CSV file path, device settings, file paths for data extraction, column numbers for data extraction, batch size, number of workers, pin memory, class weights, learning rate, validation interval, and maximum epochs.
+
+## Data Preparation
+
+The script generates file and label lists from the extracted images. The labels are mapped to binary classes (labels 1 and 2 to class 0, and label 3 to class 1) and converted to one-hot format for binary classifier training.
+
+## Data Augmentation
+
+Data augmentation is applied to the training data using MONAI's `Compose` function. The transformations include scaling intensity, ensuring the first channel, random rotation, affine transformation, flipping, zooming, and adding Gaussian noise. The validation data undergoes a simpler transformation process, including scaling intensity, ensuring the first channel, and normalizing intensity.
