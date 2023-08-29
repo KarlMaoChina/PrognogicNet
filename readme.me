@@ -1,39 +1,39 @@
-# train_2d_xy_seg_aug_simp.py
+# `train_2d_xy_seg_aug_simp.py`
 
 This script is used for training a 2D segmentation model with data augmentation. It uses the MONAI framework and PyTorch for the implementation.
 
 ## Dependencies
 
-- os
-- sys
-- csv
-- logging
-- shutil
-- tempfile
-- matplotlib
-- numpy
-- torch
-- nibabel
-- monai
-- random
-- json
-- datetime
-- sklearn
-- fileutility
-- modelresnet
-- custom_resnet_full
-- train_utility
-- train_config
+- `os`
+- `sys`
+- `csv`
+- `logging`
+- `shutil`
+- `tempfile`
+- `matplotlib`
+- `numpy`
+- `torch`
+- `nibabel`
+- `monai`
+- `random`
+- `json`
+- `datetime`
+- `sklearn`
+- `fileutility`
+- `modelresnet`
+- `custom_resnet_full`
+- `train_utility`
+- `train_config`
 
 ## Main Functionality
 
 The script starts by setting up the configuration, logging, and defining file paths for data extraction. It then generates file and label lists from the extracted images. The labels are mapped to binary classes and converted to one-hot format for binary classifier training.
 
-Data augmentation is applied to the training data using MONAI's Compose function. The transformations include scaling intensity, ensuring the first channel, random rotation, affine transformation, flipping, zooming, and adding Gaussian noise.
+Data augmentation is applied to the training data using MONAI's `Compose` function. The transformations include scaling intensity, ensuring the first channel, random rotation, affine transformation, flipping, zooming, and adding Gaussian noise.
 
-The script then defines the Nifti dataset and data loader, and checks the first item in the loader. It creates training and validation data loaders, and defines the model (CustomEfficientNet in this case).
+The script then defines the Nifti dataset and data loader, and checks the first item in the loader. It creates training and validation data loaders, and defines the model (`CustomEfficientNet` in this case).
 
-The model is trained using the Adam optimizer and CrossEntropyLoss as the loss function. The training process includes validation at certain intervals, and the best model is saved based on the validation accuracy.
+The model is trained using the `Adam` optimizer and `CrossEntropyLoss` as the loss function. The training process includes validation at certain intervals, and the best model is saved based on the validation accuracy.
 
 The training information, including the epoch, loss, AUC, and accuracy for both training and validation, is written to a CSV file.
 
@@ -41,4 +41,3 @@ The training information, including the epoch, loss, AUC, and accuracy for both 
 
 To run the script, use the following command:
 
-python train_2d_xy_seg_aug_simp.py
