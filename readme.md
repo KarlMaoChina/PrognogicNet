@@ -1,6 +1,6 @@
 # `Project-ProgNos`
 
-This script is used for training a 2D classification model with data augmentation. It uses the MONAI framework and PyTorch for the implementation. This is a project for jiaxing no 1 hospital. This is still a early day work.
+This script is used for training a 2D classification model with data augmentation. It uses the MONAI framework and PyTorch for the implementation. This is a project for jiaxing no 1 hospital. This is still a very early day work.
 
 ## Dependencies
 

@@ -203,6 +203,7 @@ def read_3d_mask_single_with_center(mask_list):
     return masks, z_indices, centers
 
 def extract_largest_mask_and_neighbors_with_crop(image_dir, mask_dir, output_dir):
+
     # Generate image and mask pairs
     image_list, mask_list = generate_image_and_mask_pairs(image_dir, mask_dir)
 
@@ -229,6 +230,50 @@ def extract_largest_mask_and_neighbors_with_crop(image_dir, mask_dir, output_dir
             end_x = int(min(image.shape[0], center_x + 64))
             start_y = int(max(0, center_y - 64))
             end_y = int(min(image.shape[1], center_y + 64))
+
+            image_2d = image[start_x:end_x, start_y:end_y, z_index]
+            mask_2d = masks[i][start_x:end_x, start_y:end_y, z_index]
+
+            # Add the 2D image and mask to the 3D arrays
+            image_3d[:, :, j+1] = image_2d
+            mask_3d[:, :, j+1] = mask_2d
+
+        # Extract the original image ID from the image path
+        original_image_id = os.path.basename(image_path).split('.')[0]
+
+        # Save the extracted 3D image and mask as new .nii.gz files
+        output_image_path = os.path.join(output_dir, f'extracted_image_{original_image_id}.nii.gz')
+        output_mask_path = os.path.join(output_dir, f'extracted_mask_{original_image_id}.nii.gz')  # Path for the mask
+        save_image(image_3d, output_image_path)
+        save_image(mask_3d, output_mask_path)  # Save the mask
+        
+def extract_and_save_cropped_images(image_dir, mask_dir, output_dir, crop_size=(64, 64, 3)):
+    # Generate image and mask pairs
+    image_list, mask_list = generate_image_and_mask_pairs(image_dir, mask_dir)
+
+    # Read 3D masks and get z-index of largest 2D mask
+    masks, z_indices, centers = read_3d_mask_single_with_center(mask_list)
+
+    # Extract the corresponding 2D images and masks
+    for i, image_path in enumerate(image_list):
+        image = nib.load(image_path).get_fdata()
+
+        # Initialize an empty 3D array to store the 2D slices
+        image_3d = np.empty(crop_size)
+        mask_3d = np.empty(crop_size)  # For storing the masks
+
+        for j in range(-1, 2):
+            z_index = z_indices[i] + j
+
+            # Ensure z_index is within the valid range
+            z_index = max(0, min(z_index, image.shape[2] - 1))
+
+            # Crop the 2D image and mask around the center
+            center_x, center_y = centers[i]
+            start_x = int(max(0, center_x - crop_size[0]//2))
+            end_x = int(min(image.shape[0], center_x + crop_size[0]//2))
+            start_y = int(max(0, center_y - crop_size[1]//2))
+            end_y = int(min(image.shape[1], center_y + crop_size[1]//2))
 
             image_2d = image[start_x:end_x, start_y:end_y, z_index]
             mask_2d = masks[i][start_x:end_x, start_y:end_y, z_index]

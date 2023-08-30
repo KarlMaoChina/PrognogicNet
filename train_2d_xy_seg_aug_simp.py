@@ -112,11 +112,8 @@ def main():
     val_loader = DataLoader(val_ds, batch_size=1, num_workers=config.num_workers, pin_memory=pin_memory)
 
     # Define the model
-    model = CustomEfficientNet().to(device)
-
-    # Load pretrained weights
-    pretrained_weights = torch.load("/home/maoshufan/JIA2023819/pretrain_weight/efficientnet-b0-355c32eb.pth")
-    #model.load_state_dict(pretrained_weights)
+    pretrained_weights_path = "/home/maoshufan/JIA2023819/pretrain_weight/efficientnet-b0-355c32eb.pth"
+    model = CustomEfficientNet(weights_path=pretrained_weights_path, pretrained=True).to(device)
 
     input_data = torch.rand((1, 3, 128, 128)).to(device)
     ouput = model(input_data)
