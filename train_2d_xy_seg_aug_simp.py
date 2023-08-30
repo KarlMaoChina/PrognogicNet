@@ -84,7 +84,7 @@ def main():
         RandRotate90(),
         RandAffine(),
         RandFlip(),
-        RandZoom(min_zoom=0.7, max_zoom=1.2, prob=0.5),
+        RandZoom(min_zoom=0.7, max_zoom=1.3, prob=0.5),
         RandGaussianNoise(),
         NormalizeIntensity(),
     ])
@@ -113,7 +113,7 @@ def main():
 
     # Define the model
     pretrained_weights_path = "/home/maoshufan/JIA2023819/pretrain_weight/efficientnet-b0-355c32eb.pth"
-    model = CustomEfficientNet(weights_path=pretrained_weights_path, pretrained=True).to(device)
+    model = CustomEfficientNet(weights_path=pretrained_weights_path, pretrained=True,freeze=True).to(device)
 
     input_data = torch.rand((1, 3, 128, 128)).to(device)
     ouput = model(input_data)
