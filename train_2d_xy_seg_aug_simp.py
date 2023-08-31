@@ -39,7 +39,7 @@ from fileutility import (
     generate_file_and_label_lists_from_extracted_images,
 )
 from modelresnet import CustomResNet
-from custom_resnet_full import CustomEfficientNet
+from custom_resnet_full import CustomEfficientNet,StdEfficientNet
 from train_utility import train_model,eval_model,load_data,write_training_info_to_json
 from train_config import TrainConfig
 
@@ -114,7 +114,7 @@ def main():
     # Define the model
     pretrained_weights_path = "/home/maoshufan/JIA2023819/pretrain_weight/efficientnet-b0-355c32eb.pth"
     model = CustomEfficientNet(weights_path=pretrained_weights_path, pretrained=True,freeze=True).to(device)
-
+    # model = StdEfficientNet()
     input_data = torch.rand((1, 3, 128, 128)).to(device)
     ouput = model(input_data)
     print(ouput)

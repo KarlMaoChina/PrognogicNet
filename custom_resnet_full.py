@@ -50,6 +50,17 @@ class CustomEfficientNet(nn.Module):
             nn.Dropout(0.5),
             nn.Linear(100, 2)
         )
+        
+        self.pretrained = pretrained
+        self.weights_path = weights_path
+        self.freeze = freeze
+
+    def get_model_info(self):
+        return {
+            "pretrained": self.pretrained,
+            "weights_path": self.weights_path,
+            "freeze": self.freeze
+        }
 
     def forward(self, x):
         x = self.efficientnet(x)
@@ -61,7 +72,15 @@ class StdEfficientNet(nn.Module):
         super(StdEfficientNet, self).__init__()
         # Load an EfficientNet model from MONAI
         self.efficientnet = EfficientNetBN("efficientnet-b0", in_channels=3, num_classes=2, pretrained=False)
+    
 
+
+    def get_model_info(self):
+        return {
+            "pretrained": False,
+            "weights_path": None,
+            "freeze": False
+        }
     def forward(self, x):
         x = self.efficientnet(x)
         return x

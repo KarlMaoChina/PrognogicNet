@@ -125,18 +125,26 @@ def load_data(file_path, csv_file, train_transforms, val_transforms, pin_memory)
     return train_loader, val_loader
 
 def write_training_info_to_json(model, optimizer, config, loss_function, weights, base_write_path):
+    # Convert the config object to a dictionary
+    config_dict = {attr: str(getattr(config, attr)) if attr == 'device' else getattr(config, attr) for attr in dir(config) if not attr.startswith("__") and not callable(getattr(config, attr))}
+
+    model_info = model.get_model_info()
+
+    # Get current timestamp
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+
     training_info = {
         "model_name": type(model).__name__,
-        "pretrained": True,  # or False, depending on your case
+        "pretrained": model_info["pretrained"],
+        "weights_path": model_info["weights_path"],
+        "freeze": model_info["freeze"],
         "optimizer": type(optimizer).__name__,
-        "learning_rate": config.learning_rate,
+        "config": config_dict,  # Add the config dictionary to the training_info
         "loss_function": type(loss_function).__name__,
-        "class_weights": weights,
-        # add any other parameters you want to track
+        "weights": weights,
+        "timestamp": timestamp  # Add timestamp to the training_info
     }
 
-    # Write the training parameters to a JSON file
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_path = os.path.join(base_write_path, f"training_info_{timestamp}.json")
-    with open(file_path, "w") as file:
-        json.dump(training_info, file, indent=4)
+    # Write the training_info dictionary to a JSON file with timestamp in its name
+    with open(os.path.join(base_write_path, f'training_info_{timestamp}.json'), 'w') as f:
+        json.dump(training_info, f, indent=4)
