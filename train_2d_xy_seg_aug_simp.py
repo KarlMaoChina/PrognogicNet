@@ -42,6 +42,7 @@ from modelresnet import CustomResNet
 from custom_resnet_full import CustomEfficientNet,StdEfficientNet
 from train_utility import train_model,eval_model,load_data,write_training_info_to_json
 from train_config import TrainConfig
+from create_train_val_set import load_from_file
 
 def main():
     config = TrainConfig()
@@ -64,19 +65,27 @@ def main():
     file_path = config.file_path
     csv_file_labels = config.csv_file_labels
     save_path = config.save_path
-    column_a = config.column_a
-    column_m = config.column_m
 
     # Generate file and label lists
-    file_list, label_list = generate_file_and_label_lists_from_extracted_images(file_path, csv_file_labels)
-    print(file_list)
-    print(label_list)
+    #file_list, label_list = generate_file_and_label_lists_from_extracted_images(file_path, csv_file_labels)
+    #print(file_list)
+    #print(label_list)
     # Map labels 1 and 2 to class 0, and label 3 to class 1
-    label_list = [0 if int(label) in [1, 2] else 1 for label in label_list]
+    #label_list = [0 if int(label) in [1, 2] else 1 for label in label_list]
 
     # Convert labels to one-hot format for binary classifier training
-    labels = torch.nn.functional.one_hot(torch.as_tensor(label_list)).float()
-    print(labels)
+    #labels = torch.nn.functional.one_hot(torch.as_tensor(label_list)).float()
+    #print(labels)
+    # Load the train and validation sets from files
+    train_files, train_labels = load_from_file('train_set.pkl')
+    val_files, val_labels = load_from_file('val_set.pkl')
+
+    # Convert labels to one-hot format for binary classifier training
+    train_labels = torch.nn.functional.one_hot(torch.as_tensor(train_labels)).float()
+    val_labels = torch.nn.functional.one_hot(torch.as_tensor(val_labels)).float()
+
+
+
 
     train_transforms = Compose([
         ScaleIntensity(), 
@@ -96,7 +105,7 @@ def main():
     ])
 
     # Define nifti dataset and data loader
-    check_ds = ImageDataset(image_files=file_list, labels=labels, transform=train_transforms)
+    check_ds = ImageDataset(image_files=train_files, labels=train_labels, transform=train_transforms)
     check_loader = DataLoader(check_ds, batch_size=config.batch_size, num_workers=config.num_workers, pin_memory=pin_memory)
 
     # Check the first item in the loader
@@ -106,14 +115,14 @@ def main():
     print(type(im), im.shape, label, label.shape)
 
     # Create training and validation data loaders
-    train_ds = ImageDataset(image_files=file_list[:250], labels=labels[:250], transform=train_transforms)
+    train_ds = ImageDataset(image_files=train_files, labels=train_labels, transform=train_transforms)
     train_loader = DataLoader(train_ds, batch_size=config.batch_size, shuffle=True, num_workers=config.num_workers, pin_memory=pin_memory)
-    val_ds = ImageDataset(image_files=file_list[-50:], labels=labels[-50:], transform=val_transforms)
+    val_ds = ImageDataset(image_files=val_files, labels=val_labels, transform=val_transforms)
     val_loader = DataLoader(val_ds, batch_size=1, num_workers=config.num_workers, pin_memory=pin_memory)
 
     # Define the model
     pretrained_weights_path = "/home/maoshufan/JIA2023819/pretrain_weight/efficientnet-b0-355c32eb.pth"
-    model = CustomEfficientNet(weights_path=pretrained_weights_path, pretrained=True,freeze=True).to(device)
+    model = CustomEfficientNet(weights_path=pretrained_weights_path, pretrained=True,freeze=False).to(device)
     # model = StdEfficientNet()
     input_data = torch.rand((1, 3, 128, 128)).to(device)
     ouput = model(input_data)
