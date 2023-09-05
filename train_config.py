@@ -5,7 +5,8 @@ import time
 class TrainConfig:
     def __init__(self):
         # File paths and column numbers for data extraction
-        self.file_path = "/data/maoshufan/jiadata/T2WI-1/images_cropxy_full/"
+        self.file_path = "/data/maoshufan/jiadata/T2WI-1/images_adc_crop/"
+        self.file_path_T2W1 = '/data/maoshufan/jiadata/T2WI-1/images_cropxy_full'
         self.csv_file_labels = "/data/maoshufan/jiadata/T2WI-1/result.csv"
         self.save_path = "/data/maoshufan/jiadata/T2WI-1/imagesave/"
         self.column_a = 1

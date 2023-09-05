@@ -37,10 +37,10 @@ def generate_balanced_sets(file_list, label_list, train_size=250, val_size=50):
     return list(train_files), list(train_labels), list(val_files), list(val_labels)
 
 if __name__ == "__main__":
-    file_path = "/data/maoshufan/jiadata/T2WI-1/images_cropxy_full/"
+    file_path = "/data/maoshufan/jiadata/T2WI-1/images_adc_crop"
     csv_file_labels = "/data/maoshufan/jiadata/T2WI-1/result.csv"
     file_list, label_list = generate_file_and_label_lists_from_extracted_images(file_path,csv_file_labels)
     train_files, train_labels, val_files, val_labels = generate_balanced_sets(file_list, label_list)
     # Save the train and validation sets to files
-    save_to_file((train_files, train_labels), 'train_set.pkl')
-    save_to_file((val_files, val_labels), 'val_set.pkl')
+    save_to_file((train_files, train_labels), 'train_set_ADC.pkl')
+    save_to_file((val_files, val_labels), 'val_set_ADC.pkl')
