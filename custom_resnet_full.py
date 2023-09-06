@@ -20,7 +20,65 @@ from collections import OrderedDict
 #    def forward(self, x):
 #        x = self.resnet(x)
 #        return x
-    
+class CustomEfficientNetSimp(nn.Module):
+    def __init__(self, pretrained=False, weights_path=None, freeze=False):
+        super(CustomEfficientNetSimp, self).__init__()
+        # Load a pre-trained EfficientNet model from MONAI
+        self.efficientnet = EfficientNetBN("efficientnet-b5", in_channels=3, num_classes=1000, pretrained=False)
+
+        if pretrained and weights_path is not None:
+            pretrained_dict = torch.load(weights_path)
+            print(pretrained_dict.keys())
+
+            new_state_dict = OrderedDict()
+            for k, v in pretrained_dict.items():
+                name = k
+                if "_blocks." in k:
+                    parts = k.split(".")
+                    name = ".".join(parts[:-1]) + ".0." + parts[-1]
+                new_state_dict[name] = v
+
+            self.efficientnet.load_state_dict(new_state_dict, strict=False)
+        # Remove the last linear layer
+        self.efficientnet._fc = nn.Identity()
+        self.efficientnet._swish = nn.Identity()
+
+        # Freeze the parameters of the EfficientNet model if freeze is True
+        if freeze:
+            for param in self.efficientnet.parameters():
+                param.requires_grad = False
+
+        self.fc = nn.Sequential(
+            nn.Linear(2048, 1000),
+            nn.BatchNorm1d(1000),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(1000, 500),
+            nn.BatchNorm1d(500),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(500, 100),
+            nn.BatchNorm1d(100),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(100, 2)
+        )
+
+        self.pretrained = pretrained
+        self.weights_path = weights_path
+        self.freeze = freeze
+
+    def get_model_info(self):
+        return {
+            "pretrained": self.pretrained,
+            "weights_path": self.weights_path,
+            "freeze": self.freeze
+        }
+
+    def forward(self, x):
+        x = self.efficientnet(x)
+        x = self.fc(x)
+        return x
 
 class CustomEfficientNet(nn.Module):
     def __init__(self, pretrained=False, weights_path=None, freeze=False):
@@ -51,14 +109,16 @@ class CustomEfficientNet(nn.Module):
 
         self.fc = nn.Sequential(
             nn.Linear(1280, 500),
+            nn.BatchNorm1d(500),
             nn.ReLU(),
             nn.Dropout(0.5),
             nn.Linear(500, 100),
+            nn.BatchNorm1d(100),
             nn.ReLU(),
             nn.Dropout(0.5),
             nn.Linear(100, 2)
         )
-        
+
         self.pretrained = pretrained
         self.weights_path = weights_path
         self.freeze = freeze
@@ -81,8 +141,6 @@ class StdEfficientNet(nn.Module):
         super(StdEfficientNet, self).__init__()
         # Load an EfficientNet model from MONAI
         self.efficientnet = EfficientNetBN("efficientnet-b0", in_channels=3, num_classes=2, pretrained=False)
-    
-
 
     def get_model_info(self):
         return {

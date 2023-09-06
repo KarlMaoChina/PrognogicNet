@@ -33,13 +33,14 @@ from monai.transforms import (
 )
 from monai.utils.misc import first
 from torch.utils.tensorboard import SummaryWriter
+from torch.optim.lr_scheduler import ExponentialLR, CosineAnnealingLR
 from sklearn.metrics import roc_auc_score
 from fileutility import (
     generate_file_and_label_lists,
     generate_file_and_label_lists_from_extracted_images,
 )
 from modelresnet import CustomResNet
-from custom_resnet_full import CustomEfficientNet,StdEfficientNet
+from custom_resnet_full import CustomEfficientNet,StdEfficientNet,CustomEfficientNetSimp
 from train_utility import train_model,eval_model,load_data,write_training_info_to_json
 from train_config import TrainConfig
 from create_train_val_set import load_from_file
@@ -62,9 +63,9 @@ def main():
     print_config()
 
     # Define file paths and column numbers for data extraction
-    file_path = config.file_path
-    csv_file_labels = config.csv_file_labels
-    save_path = config.save_path
+    #file_path = config.file_path
+    #csv_file_labels = config.csv_file_labels
+    #save_path = config.save_path
 
     # Generate file and label lists
     #file_list, label_list = generate_file_and_label_lists_from_extracted_images(file_path, csv_file_labels)
@@ -76,25 +77,43 @@ def main():
     # Convert labels to one-hot format for binary classifier training
     #labels = torch.nn.functional.one_hot(torch.as_tensor(label_list)).float()
     #print(labels)
-    # Load the train and validation sets from files
-    train_files, train_labels = load_from_file('train_set.pkl')
-    val_files, val_labels = load_from_file('val_set.pkl')
+
+    # Load the train and validation sets from files,change here if you want to change which file the model is going to use!
+    train_files, train_labels = load_from_file('train_set_T2W1.pkl')
+    val_files, val_labels = load_from_file('val_set_T2W1.pkl')
 
     # Convert labels to one-hot format for binary classifier training
     train_labels = torch.nn.functional.one_hot(torch.as_tensor(train_labels)).float()
     val_labels = torch.nn.functional.one_hot(torch.as_tensor(val_labels)).float()
 
+    # Convert one-hot encoded labels to class labels
+    train_class_labels = train_labels.argmax(dim=1)
 
+    # Calculate the number of positive and negative samples
+    num_pos = train_class_labels.sum().item()
+    num_neg = len(train_class_labels) - num_pos
 
+    # Calculate the weights for each class
+    weight_for_pos = 1.0 / num_pos
+    weight_for_neg = 1.0 / num_neg
 
+    # Assign weights to each sample in the dataset
+    sample_weights = [weight_for_pos if label == 1 else weight_for_neg for label in train_class_labels]
+
+    # Convert the weights to a tensor
+    sample_weights = torch.FloatTensor(sample_weights)
+
+    # Create a WeightedRandomSampler
+    sampler = torch.utils.data.WeightedRandomSampler(weights=sample_weights, num_samples=len(sample_weights), replacement=True)
+    
     train_transforms = Compose([
         ScaleIntensity(), 
         EnsureChannelFirst(),
         RandRotate90(),
-        RandAffine(),
-        RandFlip(),
-        RandZoom(min_zoom=0.7, max_zoom=1.3, prob=0.5),
-        RandGaussianNoise(),
+        RandAffine(prob=0.1),
+        RandFlip(prob=0.25),
+        RandZoom(min_zoom=0.8, max_zoom=1.2, prob=0.3),
+        RandGaussianNoise(prob=0.2),
         NormalizeIntensity(),
     ])
 
@@ -106,7 +125,7 @@ def main():
 
     # Define nifti dataset and data loader
     check_ds = ImageDataset(image_files=train_files, labels=train_labels, transform=train_transforms)
-    check_loader = DataLoader(check_ds, batch_size=config.batch_size, num_workers=config.num_workers, pin_memory=pin_memory)
+    check_loader = DataLoader(check_ds, batch_size=1, num_workers=config.num_workers, pin_memory=pin_memory)
 
     # Check the first item in the loader
     im, label = first(check_loader)
@@ -118,13 +137,13 @@ def main():
     train_ds = ImageDataset(image_files=train_files, labels=train_labels, transform=train_transforms)
     train_loader = DataLoader(train_ds, batch_size=config.batch_size, shuffle=True, num_workers=config.num_workers, pin_memory=pin_memory)
     val_ds = ImageDataset(image_files=val_files, labels=val_labels, transform=val_transforms)
-    val_loader = DataLoader(val_ds, batch_size=1, num_workers=config.num_workers, pin_memory=pin_memory)
+    val_loader = DataLoader(val_ds, batch_size=config.batch_size, num_workers=config.num_workers, pin_memory=pin_memory)
 
     # Define the model
     pretrained_weights_path = "/home/maoshufan/JIA2023819/pretrain_weight/efficientnet-b0-355c32eb.pth"
-    model = CustomEfficientNet(weights_path=pretrained_weights_path, pretrained=True,freeze=False).to(device)
+    model = CustomEfficientNet(weights_path = pretrained_weights_path, pretrained=True, freeze=False).to(device)
     # model = StdEfficientNet()
-    input_data = torch.rand((1, 3, 128, 128)).to(device)
+    input_data = torch.rand((4, 3, 128, 128)).to(device)
     ouput = model(input_data)
     print(ouput)
     
@@ -133,8 +152,13 @@ def main():
     class_weights = torch.FloatTensor(weights).cuda()
     loss_function = torch.nn.CrossEntropyLoss(weight=class_weights)
 
+    #loss_function = torch.nn.CrossEntropyLoss()
     # Define the optimizer
     optimizer = torch.optim.Adam(model.parameters(), config.learning_rate)
+    #optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate, weight_decay=0.01)
+
+    # Define the LR scheduler
+    scheduler = CosineAnnealingLR(optimizer, T_max=config.max_epochs)
 
     # Start a typical PyTorch training
     val_interval = config.val_interval
@@ -157,6 +181,9 @@ def main():
             val_loss = 'N/A'
             auc = 'N/A'
             metric = 0
+
+        # Update learning rate
+        scheduler.step()
             
         with open(config.csv_file, 'a', newline='') as file:
             csv_writer = csv.writer(file)

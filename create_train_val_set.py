@@ -10,7 +10,7 @@ def load_from_file(filename):
     with open(filename, 'rb') as f:
         return pickle.load(f)
     
-def generate_balanced_sets(file_list, label_list, train_size=250, val_size=50):
+def generate_balanced_sets(file_list, label_list, train_size=260, val_size=40):
     # Separate positive and negative samples
     label_list = [0 if int(label) in [1, 2] else 1 for label in label_list]
 
@@ -37,10 +37,10 @@ def generate_balanced_sets(file_list, label_list, train_size=250, val_size=50):
     return list(train_files), list(train_labels), list(val_files), list(val_labels)
 
 if __name__ == "__main__":
-    file_path = "/data/maoshufan/jiadata/T2WI-1/images_adc_crop"
+    file_path = "/data/maoshufan/jiadata/T2WI-1/images_cropxy_full"
     csv_file_labels = "/data/maoshufan/jiadata/T2WI-1/result.csv"
     file_list, label_list = generate_file_and_label_lists_from_extracted_images(file_path,csv_file_labels)
     train_files, train_labels, val_files, val_labels = generate_balanced_sets(file_list, label_list)
     # Save the train and validation sets to files
-    save_to_file((train_files, train_labels), 'train_set_ADC.pkl')
-    save_to_file((val_files, val_labels), 'val_set_ADC.pkl')
+    save_to_file((train_files, train_labels), 'train_set_T2W1.pkl')
+    save_to_file((val_files, val_labels), 'val_set_T2W1.pkl')
