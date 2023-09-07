@@ -41,7 +41,7 @@ class CustomEfficientNetSimp(nn.Module):
             self.efficientnet.load_state_dict(new_state_dict, strict=False)
         # Remove the last linear layer
         self.efficientnet._fc = nn.Identity()
-        self.efficientnet._swish = nn.Identity()
+        #self.efficientnet._swish = nn.Identity()
 
         # Freeze the parameters of the EfficientNet model if freeze is True
         if freeze:
@@ -52,15 +52,15 @@ class CustomEfficientNetSimp(nn.Module):
             nn.Linear(2048, 1000),
             nn.BatchNorm1d(1000),
             nn.ReLU(),
-            nn.Dropout(0.5),
+            nn.Dropout(0.2),
             nn.Linear(1000, 500),
             nn.BatchNorm1d(500),
             nn.ReLU(),
-            nn.Dropout(0.5),
+            nn.Dropout(0.2),
             nn.Linear(500, 100),
             nn.BatchNorm1d(100),
             nn.ReLU(),
-            nn.Dropout(0.5),
+            nn.Dropout(0.2),
             nn.Linear(100, 2)
         )
 
@@ -111,11 +111,11 @@ class CustomEfficientNet(nn.Module):
             nn.Linear(1280, 500),
             nn.BatchNorm1d(500),
             nn.ReLU(),
-            nn.Dropout(0.5),
+            nn.Dropout(0.3),
             nn.Linear(500, 100),
             nn.BatchNorm1d(100),
             nn.ReLU(),
-            nn.Dropout(0.5),
+            nn.Dropout(0.3),
             nn.Linear(100, 2)
         )
 

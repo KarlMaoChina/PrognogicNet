@@ -107,18 +107,20 @@ def main():
     sampler = torch.utils.data.WeightedRandomSampler(weights=sample_weights, num_samples=len(sample_weights), replacement=True)
     
     train_transforms = Compose([
-        ScaleIntensity(), 
+        ScaleIntensity(),
+        #Resize((224, 224, 3)),
         EnsureChannelFirst(),
         RandRotate90(),
-        RandAffine(prob=0.1),
-        RandFlip(prob=0.25),
-        RandZoom(min_zoom=0.8, max_zoom=1.2, prob=0.3),
-        RandGaussianNoise(prob=0.2),
+        #RandAffine(prob=0.5),
+        RandFlip(prob=0.5),
+        RandZoom(min_zoom=0.8, max_zoom=1.2, prob=0.5),
+        RandGaussianNoise(prob=0.5),
         NormalizeIntensity(),
     ])
 
     val_transforms = Compose([
-        ScaleIntensity(), 
+        ScaleIntensity(),
+        #Resize((224, 224, 3)),
         EnsureChannelFirst(),    
         NormalizeIntensity(),
     ])
@@ -139,13 +141,18 @@ def main():
     val_ds = ImageDataset(image_files=val_files, labels=val_labels, transform=val_transforms)
     val_loader = DataLoader(val_ds, batch_size=config.batch_size, num_workers=config.num_workers, pin_memory=pin_memory)
 
-    # Define the model
+    # Define the b0 model, uncomment if want to use b0
     pretrained_weights_path = "/home/maoshufan/JIA2023819/pretrain_weight/efficientnet-b0-355c32eb.pth"
     model = CustomEfficientNet(weights_path = pretrained_weights_path, pretrained=True, freeze=False).to(device)
+
+    #use this if use the b5 model
+    #pretrained_weights_path = "/home/maoshufan/JIA2023819/pretrain_weight/efficientnet-b5-b6417697.pth"
+    #model = CustomEfficientNetSimp(weights_path=pretrained_weights_path, pretrained=True, freeze=False).to(device)
     # model = StdEfficientNet()
-    input_data = torch.rand((4, 3, 128, 128)).to(device)
-    ouput = model(input_data)
-    print(ouput)
+
+    #input_data = torch.rand((4, 3, 128, 128)).to(device)
+    #ouput = model(input_data)
+    #print(ouput)
     
     # Define the loss function with class weights
     weights = config.weights
@@ -153,8 +160,9 @@ def main():
     loss_function = torch.nn.CrossEntropyLoss(weight=class_weights)
 
     #loss_function = torch.nn.CrossEntropyLoss()
-    # Define the optimizer
+    # Define the optimizer,the expanded is lr for b5, the non_expanded is lr for b0
     optimizer = torch.optim.Adam(model.parameters(), config.learning_rate)
+    #optimizer = torch.optim.Adam(model.parameters(), config.learning_rate_expanded)
     #optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate, weight_decay=0.01)
 
     # Define the LR scheduler
@@ -189,14 +197,20 @@ def main():
             csv_writer = csv.writer(file)
             csv_writer.writerow([epoch + 1, epoch_loss, auc_train, average_train_accuracy, val_loss, auc, metric])
 
-            if metric > best_metric:
-                best_metric = metric
+            # if metric > best_metric:
+            #     best_metric = metric
+            #     best_metric_epoch = epoch + 1
+            #     torch.save(model.state_dict(), "best_metric_model_classification2d_array.pth")
+            #     print("saved new best metric model")
+
+            if auc > best_metric:
+                best_metric = auc
                 best_metric_epoch = epoch + 1
                 torch.save(model.state_dict(), "best_metric_model_classification2d_array.pth")
                 print("saved new best metric model")
 
             print(f"Current epoch: {epoch+1} current accuracy: {metric:.4f} ")
-            print(f"Best accuracy: {best_metric:.4f} at epoch {best_metric_epoch}")
+            print(f"Best auc: {best_metric:.4f} at epoch {best_metric_epoch}")
             tb_writer.add_scalar("val_accuracy", metric, epoch + 1)
             
     print(f"Training completed, best_metric: {best_metric:.4f} at epoch: {best_metric_epoch}")
